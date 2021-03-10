@@ -25,7 +25,22 @@ class DownPic:
     # 多进程
     pool = ''
 
+    def __init__(self, mytar, nums):
+        self.tar = mytar
+        self.pool = multiprocessing.Pool(nums)
+        self.headers['referer'] = mytar
+
+    def __getstate__(self):
+        self_dict = self.__dict__.copy()
+        del self_dict['pool']
+
+        return self_dict
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
     # 获取url列表并传给下载器
+
     def geturllist(self, thispagenum):
         url = 'https://www.pixiv.net/ajax/search/artworks/{}?word={}&order=date_d&mode=all&p={}&s_mode=s_tag&ty\
                 pe=all&lang=zh'.format(tar, tar, thispagenum)
@@ -36,6 +51,10 @@ class DownPic:
         urllist = ['https://www.pixiv.net/artworks/' + temp for temp in idlist]
         print(urllist)
         self.from_urllist_download(urllist)
+
+    # 多进程执行图片下载
+    def from_urllist_download(self, urllist):
+        self.pool.map(self.getandsavepic, urllist)
 
     # 通过传入的url获取图片并保存
     def getandsavepic(self, url):
@@ -60,23 +79,6 @@ class DownPic:
             self.repeat += 1
         except FileNotFoundError:
             self.totalerr.append(url)
-
-    def __init__(self, mytar, nums):
-        self.tar = mytar
-        self.pool = multiprocessing.Pool(nums)
-        self.headers['referer'] = mytar
-
-    def from_urllist_download(self, urllist):
-        self.pool.map(self.getandsavepic, urllist)
-
-    def __getstate__(self):
-        self_dict = self.__dict__.copy()
-        del self_dict['pool']
-
-        return self_dict
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
 
     # 在当前目录的子目录创建图片文件夹
     @staticmethod
